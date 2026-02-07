@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from typing import Any, Callable, Dict, List, Optional, Sequence
 
@@ -54,14 +55,16 @@ class DiffDelta:
         self.timeout = timeout
 
         # Set up cursor persistence
+        # Priority: explicit arg > DD_CURSOR_PATH env var > default (~/.diffdelta/)
         if cursor_path is None:
             self._cursors: Optional[CursorStore] = None
         else:
-            self._cursors = CursorStore(cursor_path if cursor_path else None)
+            resolved = cursor_path if cursor_path else os.environ.get("DD_CURSOR_PATH", "")
+            self._cursors = CursorStore(resolved if resolved else None)
 
         # Set up HTTP session
         self._session = requests.Session()
-        self._session.headers["User-Agent"] = "diffdelta-python/0.1.0"
+        self._session.headers["User-Agent"] = "diffdelta-python/0.1.1"
         if self.api_key:
             self._session.headers["X-DiffDelta-Key"] = self.api_key
 
@@ -302,11 +305,9 @@ class DiffDelta:
 
     # ── Internal ──
 
-    _source_tags_cache: Optional[Dict[str, List[str]]] = None
-
     def _get_source_tags(self) -> Dict[str, List[str]]:
         """Cache source → tags mapping for tag-based filtering."""
-        if self._source_tags_cache is None:
+        if not hasattr(self, "_source_tags_cache") or self._source_tags_cache is None:
             try:
                 all_sources = self.sources()
                 self._source_tags_cache = {

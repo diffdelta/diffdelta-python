@@ -46,7 +46,7 @@ def risk_color(score):
 
 def post_to_discord(item):
     """Format a FeedItem as a Discord embed and post it."""
-    risk = item.raw.get("risk_score")
+    risk = item.risk_score
 
     if risk is not None and risk < MIN_RISK_SCORE:
         return

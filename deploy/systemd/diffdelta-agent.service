@@ -5,6 +5,7 @@
 #   2. Copy a recipe to /opt/diffdelta/:
 #        sudo mkdir -p /opt/diffdelta
 #        sudo cp recipes/slack_alerts.py /opt/diffdelta/agent.py
+#        sudo chown -R nobody:nogroup /opt/diffdelta
 #   3. Install this service:
 #        sudo cp diffdelta-agent.service /etc/systemd/system/
 #        sudo systemctl daemon-reload
@@ -22,6 +23,10 @@ Wants=network-online.target
 Type=simple
 User=nobody
 Group=nogroup
+
+# Cursor persistence — saved to /opt/diffdelta/cursors.json
+# so it survives restarts. (Default ~/ path won't work for nobody user.)
+Environment="DD_CURSOR_PATH=/opt/diffdelta/cursors.json"
 
 # Set your integration webhook/token here:
 Environment="SLACK_WEBHOOK_URL=https://hooks.slack.com/services/T.../B.../xxx"

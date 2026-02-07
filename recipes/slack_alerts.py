@@ -48,7 +48,7 @@ def risk_emoji(score):
 
 def post_to_slack(item):
     """Format a FeedItem as a Slack message and post it."""
-    risk = item.raw.get("risk_score")
+    risk = item.risk_score
 
     # Skip items below minimum risk score
     if risk is not None and risk < MIN_RISK_SCORE:

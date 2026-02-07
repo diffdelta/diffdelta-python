@@ -32,6 +32,7 @@ class FeedItem:
     published_at: Optional[str] = None
     updated_at: Optional[str] = None
     bucket: str = "new"  # "new" | "updated" | "removed"
+    risk_score: Optional[float] = None  # 0-10 scale, None if not scored
     provenance: Dict[str, Any] = field(default_factory=dict)
     raw: Dict[str, Any] = field(default_factory=dict)
 
@@ -45,6 +46,13 @@ class FeedItem:
         elif isinstance(content, str):
             excerpt = content
 
+        # Extract risk_score from either top-level or nested summary
+        risk = data.get("risk_score")
+        if risk is None:
+            summary = data.get("summary", {})
+            if isinstance(summary, dict):
+                risk = summary.get("risk_score")
+
         return cls(
             source=data.get("source", ""),
             id=data.get("id", ""),
@@ -54,6 +62,7 @@ class FeedItem:
             published_at=data.get("published_at"),
             updated_at=data.get("updated_at"),
             bucket=bucket,
+            risk_score=risk,
             provenance=data.get("provenance", {}),
             raw=data,
         )

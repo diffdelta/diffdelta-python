@@ -66,8 +66,7 @@ runs:
 
         flagged = []
         for item in items:
-            risk = item.raw.get("risk_score")
-            if risk is not None and risk >= min_risk:
+            if item.risk_score is not None and item.risk_score >= min_risk:
                 flagged.append(item)
 
         print(f"::group::DiffDelta Security Scan Results")
@@ -76,7 +75,7 @@ runs:
         print()
 
         for item in flagged:
-            risk = item.raw.get("risk_score", "?")
+            risk = item.risk_score if item.risk_score is not None else "?"
             print(f"::warning title={item.source}::Risk {risk}/10 — {item.headline}")
             print(f"  URL: {item.url}")
             print()
@@ -92,7 +91,7 @@ runs:
                     f.write(f"**{len(flagged)} high-risk items detected** (risk ≥ {min_risk})\n\n")
                     f.write(f"| Source | Risk | Advisory |\n|--------|------|----------|\n")
                     for item in flagged:
-                        risk = item.raw.get("risk_score", "?")
+                        risk = item.risk_score if item.risk_score is not None else "?"
                         f.write(f"| `{item.source}` | {risk}/10 | [{item.headline[:80]}]({item.url}) |\n")
                     f.write(f"\n*Powered by [DiffDelta](https://diffdelta.io)*\n")
 

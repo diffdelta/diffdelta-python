@@ -46,7 +46,7 @@ def risk_to_severity(score):
 
 def trigger_pagerduty(item):
     """Send a PagerDuty Events API v2 trigger for a critical item."""
-    risk = item.raw.get("risk_score")
+    risk = item.risk_score
 
     if risk is None or risk < MIN_RISK_SCORE:
         return

@@ -70,11 +70,30 @@ def risk_badge(score):
     return "🟢 LOW"
 
 
+def issue_exists(source, item_id):
+    """Check if an issue for this item already exists (prevents duplicates)."""
+    query = f"repo:{GITHUB_REPO} is:issue label:{LABEL} [{source}] in:title"
+    resp = requests.get(
+        "https://api.github.com/search/issues",
+        headers=HEADERS,
+        params={"q": f'{query} "{item_id}"', "per_page": 1},
+        timeout=10,
+    )
+    if resp.status_code == 200:
+        return resp.json().get("total_count", 0) > 0
+    return False  # If search fails, try to create (worst case: a duplicate)
+
+
 def create_issue(item):
     """Create a GitHub issue for a high-risk security item."""
-    risk = item.raw.get("risk_score")
+    risk = item.risk_score
 
     if risk is None or risk < MIN_RISK_SCORE:
+        return
+
+    # Dedup: skip if we already created an issue for this item
+    if issue_exists(item.source, item.id):
+        print(f"  ⏭️  Already exists: [{item.source}] {item.headline[:60]}")
         return
 
     badge = risk_badge(risk)

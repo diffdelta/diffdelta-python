@@ -3,12 +3,16 @@
 # Runs every 15 minutes, polls for changes, posts to your integration.
 # Cursor is persisted in a PVC so you never see duplicate alerts.
 #
-# Usage:
-#   1. Create the secret:
+# Setup:
+#   1. Build the image (from diffdelta-python root):
+#        docker build -f deploy/Dockerfile -t your-registry/diffdelta-agent:latest .
+#        docker push your-registry/diffdelta-agent:latest
+#
+#   2. Create the secret:
 #        kubectl create secret generic diffdelta-secrets \
 #          --from-literal=SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
 #
-#   2. Apply:
+#   3. Apply:
 #        kubectl apply -f cronjob.yaml
 
 apiVersion: batch/v1
@@ -30,13 +34,10 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: agent
-              image: python:3.12-slim
-              command:
-                - /bin/sh
-                - -c
-                - |
-                  pip install -q diffdelta &&
-                  python /scripts/agent.py --once
+              # Use the pre-built image (diffdelta + recipes baked in).
+              # No pip install on every run — fast, reliable, offline-safe.
+              image: your-registry/diffdelta-agent:latest
+              command: ["python", "/app/recipes/run.py", "slack_alerts", "--once"]
               envFrom:
                 - secretRef:
                     name: diffdelta-secrets
@@ -46,15 +47,10 @@ spec:
               volumeMounts:
                 - name: cursors
                   mountPath: /data
-                - name: scripts
-                  mountPath: /scripts
           volumes:
             - name: cursors
               persistentVolumeClaim:
                 claimName: diffdelta-cursors
-            - name: scripts
-              configMap:
-                name: diffdelta-agent-script
 
 ---
 apiVersion: v1
