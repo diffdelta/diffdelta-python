@@ -1,0 +1,26 @@
+# DiffDelta Agent — docker-compose deployment.
+#
+# Usage:
+#   1. Copy this file and .env.example to your server
+#   2. Create .env from .env.example and fill in your values
+#   3. docker compose up -d
+#
+# The cursor volume ensures you never see duplicate alerts,
+# even if the container restarts or is redeployed.
+
+services:
+  diffdelta-agent:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: always
+    env_file: .env   # Copy env.example to .env and fill in your values
+    volumes:
+      - cursors:/data
+    environment:
+      - RECIPE=${RECIPE:-slack_alerts}
+      - DD_CURSOR_PATH=/data/cursors.json
+
+volumes:
+  cursors:
+    driver: local

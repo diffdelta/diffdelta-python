@@ -1,0 +1,68 @@
+# DiffDelta Agent — Kubernetes CronJob.
+#
+# Runs every 15 minutes, polls for changes, posts to your integration.
+# Cursor is persisted in a PVC so you never see duplicate alerts.
+#
+# Usage:
+#   1. Create the secret:
+#        kubectl create secret generic diffdelta-secrets \
+#          --from-literal=SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
+#
+#   2. Apply:
+#        kubectl apply -f cronjob.yaml
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: diffdelta-agent
+  labels:
+    app: diffdelta
+spec:
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: agent
+              image: python:3.12-slim
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  pip install -q diffdelta &&
+                  python /scripts/agent.py --once
+              envFrom:
+                - secretRef:
+                    name: diffdelta-secrets
+              env:
+                - name: DD_CURSOR_PATH
+                  value: /data/cursors.json
+              volumeMounts:
+                - name: cursors
+                  mountPath: /data
+                - name: scripts
+                  mountPath: /scripts
+          volumes:
+            - name: cursors
+              persistentVolumeClaim:
+                claimName: diffdelta-cursors
+            - name: scripts
+              configMap:
+                name: diffdelta-agent-script
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: diffdelta-cursors
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 10Mi

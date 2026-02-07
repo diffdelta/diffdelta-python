@@ -1,0 +1,105 @@
+# DiffDelta Security Scan — GitHub Action
+#
+# Checks DiffDelta security feeds on every push or on a schedule.
+# Fails the build if any new items have risk_score ≥ threshold.
+#
+# Usage in your workflow (.github/workflows/security.yml):
+#
+#   name: Security Check
+#   on:
+#     push:
+#     schedule:
+#       - cron: '0 */6 * * *'   # Every 6 hours
+#
+#   jobs:
+#     scan:
+#       runs-on: ubuntu-latest
+#       steps:
+#         - uses: diffdelta/security-scan@v1
+#           with:
+#             min_risk_score: 7
+#             sources: 'cisa_kev,nist_nvd,github_advisories'
+
+name: 'DiffDelta Security Scan'
+description: 'Check DiffDelta security feeds for new high-risk advisories'
+
+inputs:
+  min_risk_score:
+    description: 'Minimum risk score to flag (0-10)'
+    required: false
+    default: '7'
+  sources:
+    description: 'Comma-separated source IDs to check (empty = all security sources)'
+    required: false
+    default: ''
+  fail_on_findings:
+    description: 'Fail the workflow if findings are detected'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install diffdelta
+      shell: bash
+      run: pip install diffdelta
+
+    - name: Run security scan
+      shell: python
+      env:
+        MIN_RISK: ${{ inputs.min_risk_score }}
+        SOURCES: ${{ inputs.sources }}
+        FAIL_ON_FINDINGS: ${{ inputs.fail_on_findings }}
+      run: |
+        import os
+        import sys
+        from diffdelta import DiffDelta
+
+        dd = DiffDelta(cursor_path=None)  # No cursor persistence in CI
+        min_risk = int(os.environ.get("MIN_RISK", "7"))
+        source_filter = os.environ.get("SOURCES", "")
+        fail_on = os.environ.get("FAIL_ON_FINDINGS", "true") == "true"
+
+        sources = [s.strip() for s in source_filter.split(",") if s.strip()] or None
+
+        items = dd.poll(tags=["security"], sources=sources)
+
+        flagged = []
+        for item in items:
+            risk = item.raw.get("risk_score")
+            if risk is not None and risk >= min_risk:
+                flagged.append(item)
+
+        print(f"::group::DiffDelta Security Scan Results")
+        print(f"Checked {len(items)} new security items")
+        print(f"Flagged {len(flagged)} items with risk >= {min_risk}")
+        print()
+
+        for item in flagged:
+            risk = item.raw.get("risk_score", "?")
+            print(f"::warning title={item.source}::Risk {risk}/10 — {item.headline}")
+            print(f"  URL: {item.url}")
+            print()
+
+        print(f"::endgroup::")
+
+        if flagged:
+            # Write to GitHub step summary
+            summary = os.environ.get("GITHUB_STEP_SUMMARY", "")
+            if summary:
+                with open(summary, "a") as f:
+                    f.write(f"## 🔒 DiffDelta Security Scan\n\n")
+                    f.write(f"**{len(flagged)} high-risk items detected** (risk ≥ {min_risk})\n\n")
+                    f.write(f"| Source | Risk | Advisory |\n|--------|------|----------|\n")
+                    for item in flagged:
+                        risk = item.raw.get("risk_score", "?")
+                        f.write(f"| `{item.source}` | {risk}/10 | [{item.headline[:80]}]({item.url}) |\n")
+                    f.write(f"\n*Powered by [DiffDelta](https://diffdelta.io)*\n")
+
+            if fail_on:
+                print(f"\n❌ {len(flagged)} high-risk security items found. Failing build.")
+                sys.exit(1)
+            else:
+                print(f"\n⚠️ {len(flagged)} high-risk items found (fail_on_findings=false, not failing).")
+        else:
+            print(f"\n✅ No high-risk security items found.")
