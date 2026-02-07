@@ -1,0 +1,10 @@
+pyproject.toml
+diffdelta/__init__.py
+diffdelta/client.py
+diffdelta/cursor.py
+diffdelta/models.py
+diffdelta.egg-info/PKG-INFO
+diffdelta.egg-info/SOURCES.txt
+diffdelta.egg-info/dependency_links.txt
+diffdelta.egg-info/requires.txt
+diffdelta.egg-info/top_level.txt

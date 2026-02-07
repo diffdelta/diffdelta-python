@@ -1,0 +1,25 @@
+Metadata-Version: 2.4
+Name: diffdelta
+Version: 0.1.0
+Summary: Python client for DiffDelta — agent-ready intelligence feeds
+Author-email: DiffDelta <human@diffdelta.io>
+License: MIT
+Project-URL: Homepage, https://diffdelta.io
+Project-URL: Documentation, https://diffdelta.io/#quickstart
+Project-URL: Repository, https://github.com/diffdelta/diffdelta-python
+Project-URL: Issues, https://github.com/diffdelta/diffdelta-python/issues
+Keywords: diffdelta,ai-agents,security,changefeed,intelligence
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Security
+Classifier: Topic :: Software Development :: Libraries
+Requires-Python: >=3.8
+Requires-Dist: requests>=2.25.0

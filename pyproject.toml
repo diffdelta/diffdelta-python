@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "diffdelta"
+version = "0.1.0"
+description = "Python client for DiffDelta — agent-ready intelligence feeds"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [{name = "DiffDelta", email = "human@diffdelta.io"}]
+keywords = ["diffdelta", "ai-agents", "security", "changefeed", "intelligence"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+    "requests>=2.25.0",
+]
+
+[project.urls]
+Homepage = "https://diffdelta.io"
+Documentation = "https://diffdelta.io/#quickstart"
+Repository = "https://github.com/diffdelta/diffdelta-python"
+Issues = "https://github.com/diffdelta/diffdelta-python/issues"
+
+[tool.setuptools.packages.find]
+include = ["diffdelta*"]
